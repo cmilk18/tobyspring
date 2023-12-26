@@ -12,4 +12,15 @@ public class SimpleConnectionMaker implements ConnectionMaker {
     }
 
 
+    public void setDriverClass(String driverClass) {
+    }
+
+    public void setUrl(String url) {
+    }
+
+    public void setUsername(String username) {
+    }
+
+    public void setPassword(String password) {
+    }
 }

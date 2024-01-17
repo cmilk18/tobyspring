@@ -10,8 +10,7 @@ public class SimpleConnectionMaker implements ConnectionMaker {
         Connection c = DriverManager.getConnection("jdbc:mysql://host.docker.internal:3306/test?useSSL=false", "root", "123456");
         return c;
     }
-
-
+    
     public void setDriverClass(String driverClass) {
     }
 

@@ -66,7 +66,7 @@ public class UserDao {
         c.close();
     }
 
-    public User get(String id) throws ClassNotFoundException, SQLException{
+    public User get(String id) throws ClassNotFoundException, SQLException, EmptyResultDataAccessException {
 
         //Connection c = simpleConnectionMaker.makeConnection();
         this.c = simpleConnectionMaker.makeConnection();
@@ -74,23 +74,53 @@ public class UserDao {
         PreparedStatement ps = c.prepareStatement("select * from users where id = ?");
         ps.setString(1,id);
         ResultSet rs = ps.executeQuery();
-        rs.next();
+
+        if(rs.next()){
+            this.user = new User();
+            this.user.setId(rs.getString("id"));
+            this.user.setName(rs.getString("name"));
+            this.user.setPassword(rs.getString("password"));
+        }
 
         /*User user = new User();
         user.setId(rs.getString("id"));
         user.setName(rs.getString("name"));
         user.setPassword(rs.getString("password"));*/
 
-        this.user = new User();
-        this.user.setId(rs.getString("id"));
-        this.user.setName(rs.getString("name"));
-        this.user.setPassword(rs.getString("password"));
+        rs.close();
+        ps.close();
+        c.close();
+
+        if(user == null) throw new EmptyResultDataAccessException(1);
+
+        return this.user;
+    }
+
+    public void deleteAll() throws SQLException, ClassNotFoundException {
+        Connection c = simpleConnectionMaker.makeConnection();
+
+        PreparedStatement ps = c.prepareStatement("delete from users");
+
+        ps.executeUpdate();
+
+        ps.close();
+        c.close();
+    }
+
+    public int getCount() throws SQLException, ClassNotFoundException {
+        Connection c = simpleConnectionMaker.makeConnection();
+
+        PreparedStatement ps = c.prepareStatement("SELECT count(*) from users");
+
+        ResultSet rs = ps.executeQuery();
+        rs.next();
+        int count = rs.getInt(1);
 
         rs.close();
         ps.close();
         c.close();
 
-        return this.user;
+        return count;
     }
 
 

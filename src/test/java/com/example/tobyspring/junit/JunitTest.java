@@ -41,6 +41,7 @@ public class JunitTest {
         System.out.println("testObject : " + testObjects);
         assertTrue(contextObject == null || contextObject == this.context);
         contextObject = this.context;
+
     }
 
     @Test

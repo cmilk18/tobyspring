@@ -1,5 +1,6 @@
 package com.example.tobyspring.user;
 
+import com.example.tobyspring.exception.DuplicateUserIdException;
 import com.example.tobyspring.user.dao.*;
 import com.example.tobyspring.user.domain.User;
 import org.junit.Before;
@@ -9,18 +10,15 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -31,12 +29,16 @@ import static org.junit.Assert.assertThat;
 @DirtiesContext
 public class UserDaoTest {
 
+
     public static void main(String[] args) {
         JUnitCore.main("com.example.tobyspring.user.UserDaoTest");
     }
 
     @Autowired
     private ApplicationContext context;
+
+    @Autowired
+    public ConnectionMaker connectionMaker;
 
     private UserDao dao;
     private User user1;
@@ -55,7 +57,7 @@ public class UserDaoTest {
         dataSource.setPassword("123456");
 
         this.dao.setDataSource(dataSource);*/
-        this.dao = this.context.getBean("userDao", UserDao.class);
+        this.dao = this.context.getBean("userDaoHibernate", UserDao.class);
 
 
         this.user1 = new User("sin","신호정","0214");
@@ -112,13 +114,13 @@ public class UserDaoTest {
     @Test
     public void printDaoFactoryObject(){
         DaoFactory factory = new DaoFactory();
-        UserDao dao1 = factory.userDao();
-        UserDao dao2 = factory.userDao();
+        UserDao dao1 = factory.userDaoHibernate();
+        UserDao dao2 = factory.userDaoHibernate();
 
         ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
 
-        UserDao dao3 = context.getBean("userDao",UserDao.class);
-        UserDao dao4 = context.getBean("userDao",UserDao.class);
+        UserDao dao3 = context.getBean("userDaoHibernate",UserDao.class);
+        UserDao dao4 = context.getBean("userDaoHibernate",UserDao.class);
 
         System.out.println("dao1 = " + dao1);
         System.out.println("dao2 = " + dao2);
@@ -132,8 +134,8 @@ public class UserDaoTest {
     public void printDaoFactoryObjectwithSpring(){
         ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
 
-        UserDao dao3 = context.getBean("userDao",UserDao.class);
-        UserDao dao4 = context.getBean("userDao",UserDao.class);
+        UserDao dao3 = context.getBean("userDaoHibernate",UserDao.class);
+        UserDao dao4 = context.getBean("userDaoHibernate",UserDao.class);
 
         System.out.println("dao3 = " + dao3);
         System.out.println("dao4 = " + dao4);
@@ -178,5 +180,27 @@ public class UserDaoTest {
         assertThat(user1.getName(),is(user2.getName()));
         assertThat(user1.getPassword(),is(user2.getPassword()));
     }
+
+    @Test(expected = SQLIntegrityConstraintViolationException.class)
+    public void duplicatedKey() throws SQLException, ClassNotFoundException {
+        dao.deleteAll();
+
+        dao.add(user1);
+        dao.add(user1);
+    }
+
+    /*@Test
+    public void sqlExceptionTranslate() throws SQLException, ClassNotFoundException {
+        dao.deleteAll();
+        try{
+            dao.add(user1);
+            dao.add(user1);
+        }catch(DuplicateKeyException ex){
+            SQLException sqlException = (SQLException)ex.getRootCause();
+            SQLExceptionTranslator set = new SQLErrorCodeSQLExceptionTranslator(String.valueOf(this.connectionMaker));
+            assertThat(set.translate(null,null,sqlException),is(SQLIntegrityConstraintViolationException.class));
+
+        }
+    }*/
 
 }
